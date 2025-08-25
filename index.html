@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Nearest Liquor Store Compass</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { text-align:center; font-family:sans-serif; padding:50px; }
+    #arrow { font-size:100px; transition: transform 0.2s; display:block; margin:50px auto; }
+    #status { margin-top:20px; font-size:18px; }
+    #storeName { margin-top:10px; font-size:20px; font-weight:bold; }
+    button { padding:10px 20px; font-size:16px; margin-top:20px; }
+  </style>
+</head>
+<body>
+  <h1>Liquor Store Compass</h1>
+  <div id="arrow">⬆️</div>
+  <div id="storeName">Finding nearest store...</div>
+  <div id="status"></div>
+  <button id="enableCompass">Enable Compass (iOS/Some Devices)</button>
+
+  <script>
+    const stores = [
+      [-33.42509856010387, 151.4005849099215, "Erina Heights Cellars"],
+      [-33.4250631345368, 151.40076524839702, "Liquor Stax"],
+      [-33.43656579333284, 151.39213818316568, "Liquorland Erina"],
+      [-33.43933618191193, 151.39526996423032, "BWS Erina"],
+      [-33.43530660984563, 151.38824521624645, "Ritchies IGA Plus Liquor Erina"],
+      [-33.438784310714745, 151.38307595269652, "Dan Murphy's Erina"],
+      [-33.40437416055683, 151.35090244576622, "Cellarbrations Wyoming"],
+      [-33.42357076090118, 151.43809173182004, "Wamberal Wine Palace"],
+      [-33.44650024316015, 151.37329415598862, "Liquorland Green Point"],
+      [-33.46731332342355, 151.38291766731953, "Liquorland Kincumber"],
+      [-33.437583287812, 151.35355843628196, "BamVino Cellars East Gosford"],
+      [-33.451297428095025, 151.3603736549651, "BAMVINO CELLARS GREEN POINT"],
+      [-33.464734097272185, 151.433195736931, "BWS Avoca Beach"],
+      [-33.404201603941374, 151.34995945707388, "BWS Wyoming"],
+      [-33.47586745193112, 151.35279894481545, "Liquorland Saratoga"],
+      [-33.464634735396814, 151.4335924544573, "Store 16BWS Avoca Beach"],
+      [-33.42536939179827, 151.34401860936396, "BWS Gosford"],
+      [-33.446737960093614, 151.44490602444125, "Vintage Cellars Terrigal"],
+      [-33.418355241728946, 151.4466180553129, "BWS Wamberal"],
+      [-33.441284595838844, 151.43985012103394, "Terrigal Supercellars"],
+      [-33.42692081694573, 151.34188796618304, "Ice Box Liquor Gosford"],
+      [-33.38468812168569, 151.36794978258857, "Liquorland Lisarow"],
+      [-33.46882065750956, 151.3833708760099, "Kincumber Cellars"],
+      [-33.42662952807753, 151.32974977902265, "Oldfield Cellars"],
+      [-33.38611158475272, 151.3678741612028, "BWS Lisarow"],
+      [-33.39392845930338, 151.34315392759802, "THE BOTTLE-O AT NARARA"],
+      [-33.42334189051394, 151.43843286155408, "Cellarbrations"],
+      [-33.4384599560632, 151.35549687135432, "Bottlemart - Elanora Hotel"],
+      [-33.42714730990703, 151.32253931288346, "Dan Murphy's West Gosford"],
+      [-33.40574305110892, 151.46643367463273, "Cellarbrations"],
+      [-33.36302481979738, 151.37098434665816, "Super Cellars"],
+      [-33.428383632144595, 151.31701761461525, "Liquorland West Gosford"],
+      [-33.49063724420179, 151.43122147765297, "Copacabana Cellars"],
+      [-33.48729915112663, 151.32426323488508, "Liquorland Woy Woy"],
+      [-33.446469464221686, 151.44422674003414, "Terrigal Bottler"],
+      [-33.36635968155232, 151.46392490683547, "The Bottle-O"],
+      [-33.388681238864294, 151.4736973520234, "Bateau Bay Cellars"],
+      [-33.493660565694434, 151.36376520002796, "Empire Bay Cellars"],
+      [-33.38596308541262, 151.4622968409366, "BWS Bateau Bay (Cresthaven Ave)"],
+      [-33.375296406516895, 151.47359009314943, "Liquorland Bateau Bay"]
+      // ... keep adding more stores, each separated by a comma
+    ];
+
+    let myLat = null;
+    let myLng = null;
+    let nearestStore = null;
+
+    function showStatus(text) {
+      document.getElementById("status").innerText = text;
+    }
+
+    function updateNearestStore() {
+      if (myLat === null || myLng === null) return;
+      let minDist = Infinity;
+      let closest = null;
+      for (const store of stores) {
+        const d = distance(myLat, myLng, store[0], store[1]);
+        if (d < minDist) {
+          minDist = d;
+          closest = store;
+        }
+      }
+      nearestStore = closest;
+      document.getElementById("storeName").innerText = nearestStore[2];
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          myLat = pos.coords.latitude;
+          myLng = pos.coords.longitude;
+          updateNearestStore();
+        },
+        () => showStatus("Geolocation permission denied.")
+      );
+    } else {
+      showStatus("Geolocation not supported.");
+    }
+
+    function distance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const toRad = x => x * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function bearing(lat1, lon1, lat2, lon2) {
+      const toRad = d => d * Math.PI / 180;
+      const toDeg = r => r * 180 / Math.PI;
+      const dLon = toRad(lon2 - lon1);
+      lat1 = toRad(lat1);
+      lat2 = toRad(lat2);
+      const y = Math.sin(dLon) * Math.cos(lat2);
+      const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+      return (toDeg(Math.atan2(y, x)) + 360) % 360;
+    }
+
+    function handleOrientation(event) {
+      if (myLat !== null && nearestStore !== null) {
+        let heading = event.absolute ? event.alpha : event.alpha || 0;
+        heading = 360 - heading;
+        const targetBearing = bearing(myLat, myLng, nearestStore[0], nearestStore[1]);
+        const diff = targetBearing - heading;
+        const rotation = (diff + 360) % 360;
+        document.getElementById("arrow").style.transform = `rotate(${rotation}deg)`;
+      }
+    }
+
+    document.getElementById("enableCompass").addEventListener("click", () => {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+          .then(response => {
+            if (response === 'granted') {
+              window.addEventListener("deviceorientationabsolute", handleOrientation);
+              window.addEventListener("deviceorientation", handleOrientation);
+              showStatus("Compass enabled! Point your device toward the store.");
+            } else {
+              showStatus("Compass permission denied.");
+            }
+          })
+          .catch(console.error);
+      } else {
+        window.addEventListener("deviceorientationabsolute", handleOrientation);
+        window.addEventListener("deviceorientation", handleOrientation);
+        showStatus("Compass enabled! Point your device toward the store.");
+      }
+    });
+  </script>
+</body>
+</html>
